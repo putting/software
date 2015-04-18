@@ -1,0 +1,8 @@
+@PostConstruct and @PreDestroy. To leverage
+
+JSR-250 lifecycle annotations within Spring, you must register a
+
+org.springframework.context.annotation.CommonAnnotationBeanPostProcessor instance in the IoC
+
+container.
+

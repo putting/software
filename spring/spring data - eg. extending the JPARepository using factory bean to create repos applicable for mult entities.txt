@@ -1,0 +1,92 @@
+1)      Configure the spring-data jpa repos. The emFactory will create em’s attached to a datasource. The repoFactoryBean creates diff repos.
+
+ 
+
+    <jpa:repositories base-package="com.proj.repositories" entity-manager-factory-ref="EntityManagerFactory"
+
+            factory-class="com.proj.common.JpaRepositoryFactoryBean"/>
+
+ 
+
+2)      Define the repo interface
+
+public interface DataRepository<T , ID extends Serializable> extends JpaRepository<T, ID> {
+
+    @Override
+
+    <S extends T> S save(S entity);
+
+}
+
+3)      Define the repo factory bean that implements DataRepository interface. This will be called instead of in-built repo
+
+ 
+
+public class RepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
+
+        extends JpaRepositoryFactoryBean<T, S, ID> {
+
+ 
+
+    @Override
+
+    @SuppressWarnings("unchecked")
+
+    protected RepositoryFactorySupport createRepositoryFactory(EntityManager entityManager) {
+
+        return new DimensionDataRepositoryFactory(entityManager, dataChangeEventListeners);
+
+    }
+
+ 
+
+    private static class DimensionDataRepositoryFactory<T extends ChangeableData<I>, I extends Serializable>
+
+            extends JpaRepositoryFactory {
+
+ 
+
+        private EntityManager entityManager;
+
+        List<DataChangeEventListener<?>> dataChangeEventListeners;
+
+ 
+
+        public DimensionDataRepositoryFactory(EntityManager entityManager, List<DataChangeEventListener<?>> dataChangeEventListeners) {
+
+            super(entityManager);
+
+            this.entityManager = entityManager;
+
+            this.dataChangeEventListeners = dataChangeEventListeners;
+
+        }
+
+ 
+
+        @SuppressWarnings("unchecked")
+
+        @Override
+
+        protected Object getTargetRepository(RepositoryMetadata metadata) {
+
+            return new DataRepositoryImpl<T, I>((Class<T>) metadata.getDomainType(), entityManager,
+
+                    dataChangeEventListeners);
+
+        }
+
+ 
+
+        @Override
+
+        protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
+
+            return DataRepositoryImpl.class;
+
+        }
+
+    }
+
+}
+

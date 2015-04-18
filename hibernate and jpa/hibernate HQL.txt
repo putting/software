@@ -1,0 +1,16 @@
+If you don’t want to load up an entire object and all its related entities then you can use JPQL:
+
+ 
+
+@Query("select i.id from InstrumentAnchor i where i.instrumentId = :instrumentId")
+Long findPKByInstrumentId(@Param("instrumentId") String instrumentId);
+
+Hibernate: select instrument0_.INSTRUMENT_ID as col_0_0_ from IN_INST_ANC instrument0_ inner join INSD_INST_SEDOL_HIST sedols1_ on instrument0_.id=sedols1_.IN_ID and (? >= sedols1_.EFF_FROM_DT AND ? < sedols1_.EFF_TO_DT AND ? = sedols1_.CORRECTED_IND) where sedols1_.SEDOL=?
+
+
+
+@Query("select i.instrumentId from InstrumentAnchor i join i.sedols s where s.sedol = :sedol")
+String findInstrumentIdBySedol(@Param("sedol")String sedol);
+
+Hibernate: select instrument0_.id as col_0_0_ from IN_INST_ANC instrument0_ where instrument0_.INSTRUMENT_ID=?
+

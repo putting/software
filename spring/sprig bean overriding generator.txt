@@ -1,0 +1,50 @@
+Override the default naming of Spring Beans. Here it appears to replace Impl’s with the raw service name.
+
+Not sure this is due to the impl class being specified rather than Interface.
+
+ 
+
+    <context:component-scan base-package="com"
+
+        name-generator="com.utils.BeanNameGenerator"/>
+
+ 
+
+public class BeanNameGenerator extends AnnotationBeanNameGenerator {
+
+ 
+
+    @Override
+
+    public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
+
+        String beanName;
+
+        if (definition instanceof AnnotatedBeanDefinition) {
+
+            beanName = determineBeanNameFromAnnotation((AnnotatedBeanDefinition) definition);
+
+            if (org.springframework.util.StringUtils.hasText(beanName)) {
+
+                // Explicit bean name found.
+
+                return beanName;
+
+            }
+
+        }
+
+        // Fallback: generate a unique default bean name.
+
+        beanName = buildDefaultBeanName(definition, registry);
+
+        if (beanName != null && beanName.endsWith("ServiceImpl")) {
+
+            beanName = StringUtils.removeEnd(beanName, "Impl");
+
+        }
+
+        return beanName;
+
+    }
+

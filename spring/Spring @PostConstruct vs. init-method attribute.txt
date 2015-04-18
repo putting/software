@@ -1,0 +1,18 @@
+No practically I don't think there is any difference but there are priorities in the way they work . PostConstruct,init-method are BeanPostProcessors
+
+1.PostConstruct is a JSR-250 annotaion while init-method is Spring's way of having an initializing method . 
+
+2.If you have postconstruct , this will be called first before the init methods are called
+
+3.If your bean implements initializing bean and overrides afterPropertiesSet , first post constructed is called, then the afterPropertiesSet and then init-method.
+
+ 
+
+There's no real difference. It's down to how you prefer to configure your system, and that's a matter of personal choice. Myself, I prefer to use @PostConstruct annotations for my own code (as the bean is only correctly configured after the method is called) and I use init-method when instantiating beans from non-Spring-aware libraries (can't apply annotations there, of course!) but I can totally understand people wanting to do it all one way or the other.
+
+ 
+
+I would use non-spring @PostContruct as less dependency.
+
+NB. Init useful when instantiating from libs with no spring context
+

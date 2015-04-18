@@ -1,0 +1,10 @@
+em.unwrap(Session.class)
+
+ 
+
+This was used to then .getEnabledFilter(FILTER_NAME) which must be a hibernate filter.
+
+ 
+
+This approach allows hibernate specific methods to be used when wrapped by JPA
+

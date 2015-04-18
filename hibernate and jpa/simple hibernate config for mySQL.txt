@@ -1,0 +1,5 @@
+http://examples.javacodegeeks.com/enterprise-java/spring/jpaorm/generating-database-objects-from-hibernate-entities/
+
+ 
+
+hibernate.hbm2ddl.auto=create-drop

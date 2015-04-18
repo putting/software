@@ -1,0 +1,77 @@
+EAR requires a j2EE container NOT just servlet container (like tomcat).
+
+ 
+
+Can create a single ApplicationContext as j2ee container has a hierarchy of class loaders and one available to whole application.
+
+So can define libs/beans common to all web services(war) in one place.
+
+ 
+
+NB. The Spring singletons are 1 per class loader so each WAR has its own copy.
+
+ 
+
+http://imranbohoran.blogspot.co.uk/2011/02/multiple-web-applications-one-spring.html?m=1
+
+ 
+
+nb web.xml
+
+<context-param>
+
+        <param-name>webAppRootKey</param-name>
+
+        <param-value>x-service</param-value>
+
+    </context-param>
+
+ 
+
+    <context-param>
+
+        <param-name>contextConfigLocation</param-name>
+
+        <param-value>classpath:x-service-controller-context.xml</param-value>
+
+    </context-param>
+
+ 
+
+    <servlet>
+
+        <servlet-name>spring</servlet-name>
+
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+
+        <load-on-startup>1</load-on-startup>
+
+    </servlet>
+
+ 
+
+    <servlet-mapping>
+
+        <servlet-name>spring</servlet-name>
+
+        <url-pattern>/*</url-pattern>
+
+    </servlet-mapping>
+
+ 
+
+    <listener>
+
+        <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
+
+    </listener>
+
+<!—This depends on container app. Can also be ContextLoaderServlet  à
+
+    <listener>
+
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+
+    </listener>
+
+ 

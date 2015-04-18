@@ -1,0 +1,74 @@
+Spring get beans with annotations
+
+applicationContext.getBeansWithAnnotation(adapter.annotation.annotations.MessageHandler.class).values()
+
+ 
+
+ 
+
+Get the valid annotations for a jms messages:
+
+ 
+
+Annotation[][] parameterAnnotations = getMessageHandlerMethod().getParameterAnnotations();
+
+                                                                
+
+                                // Loop around all the parameters of the method
+
+                                // Un-annotated methods are delivered the message payload by default
+
+                                Annotation[] annotations;
+
+                                Type type;
+
+                                String expression;
+
+                                for (int i = 0; i < parameterAnnotations.length; i++) {
+
+                                                annotations = parameterAnnotations[i];
+
+                                                if (annotations.length > 0) {
+
+                                                                if (annotations[0] instanceof MessageHeaders) {
+
+                                                                                type = Type.HEADERS;
+
+                                                                                expression = null;
+
+                                                                } else if (annotations[0] instanceof MessageHeader) {
+
+                                                                                type = Type.HEADER;
+
+                                                                                expression = ((MessageHeader)annotations[0]).value();
+
+                                                                } else if (annotations[0] instanceof MessagePayload) {
+
+                                                                                type = Type.PAYLOAD;
+
+                                                                                expression = ((MessagePayload)annotations[0]).value();
+
+                                                                } else if (annotations[0] instanceof Literal) {
+
+                                                                                type = Type.LITERAL;
+
+                                                                                expression = ((Literal)annotations[0]).value();
+
+                                                                } else {
+
+                                                                                throw new MGFException("Annotated Parameter value " + annotations[0] + " is not recognised.");
+
+                                                                }
+
+                                                } else {
+
+                                                                type = Type.PAYLOAD;
+
+                                                                expression = null;
+
+                                                }
+
+                                                addParameterToUse(new MessageParameterToUse(type, expression));
+
+                                }
+

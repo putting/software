@@ -1,0 +1,48 @@
+Also set up intellij to download db drivers, then you can test out the sql syntax – run queries etc..
+
+ 
+
+ 
+
+Configure in spring
+
+<jdbc:embedded-database id="sbatchDataSource" type="HSQL">
+    <jdbc:script location="classpath:/org/springframework/batch/core/schema-hsqldb.sql"/>
+</jdbc:embedded-database>
+
+ 
+
+ 
+
+---For hibernate
+
+ 
+
+<tx:annotation-driven transaction-manager="transactionManager"/>
+<jdbc:embedded-database id="dataSource" type="HSQL"/>
+
+<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+    <property name="entityManagerFactory" ref="entityManagerFactory"/>
+</bean>
+
+<bean id="hodsJpaVendorAdapter"
+      class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+    <property name="database" value="HSQL"/>
+    <property name="generateDdl" value="true"/>
+    <property name="showSql" value="true"/>
+</bean>
+
+<bean id="hodsJpaProperties"
+      class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+    <property name="properties">
+        <props>
+            <prop key="hibernate.dialect">org.hibernate.dialect.HSQLDialect</prop>
+            <prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+            <prop key="hibernate.cache.use_second_level_cache">false</prop>
+            <prop key="hibernate.ejb.entitymanager_factory_name">hodsEntityManagerFactory</prop>
+            <prop key="hibernate.connection.release_mode">auto</prop>
+        </props>
+    </property>
+</bean>
+
+ 

@@ -1,0 +1,142 @@
+Hazelcast CDW Notes
+
+Run the Monitor Centre
+C:\BEA92\dev\projects\cache\TestApp>startManCenter.bat
+will start browser. login admin/admin
+
+**objectCache project**
+a) Business Entities
+
+1. Business entities have an internalId added. This is NOT good. They are supposed to be BE. Investigate why? These are saved on the positions JPA object, but why not just have the Codes (instrumentId and fundCode) ? and look then up?
+2. BE's are Serializable. Amend Identifiable to be Serializable?
+3. Hashcode and equals does not use the internalId?
+
+b) Hods - persistance
+
+1. HasSedolPredicate
+2. Mappers updates to setInternalId(anchor.getId()). So setting the SEQ PK id for each JPA Entity.
+Removing from the JPA where it is an FK is the tricky part. May need to be an extra
+3. mappers.cache: 
+3.1 CachedBaseFundMapper: contains HazelcastInstance and IMap. Wrap cache and Map?
+CachedInstrumentMapper: ditto
+3.2 BaseFund fromEntity(Long internalId) Uses internalId SqlPredicate getting a Collection of BaseFunds.
+So is the internalId the key? why not just get single value? assert( foundFunds.size() < 2 );
+3.3 ClientFund map?
+3.4 BaseFundServiceImpl: save() after db persist return domain.setInternalId( persistedFundAnchor.getId());
+3.5 Why do the services not refer to the cache? Is saving done to db only as currently and loaded separately into cache?
+3.6 PositionMapper has new Cache fund and instrument Mappers.
+4. PositionServiceImpl: save()
+5. **Entities such as PositionEntity have InstrumentAnchor replaced by Long, so only has the FK id not the obj.**
+Does this relationship really need to be broken? I think he has only done this on position, all other relationships are 
+retained. NO changes to anchors just entities.
+5.1 So adapter will call BaseFundService which will lookup BaseFundAnchor (which has internalId) and then store it on BE. So when position saved, the instrumentAnchor(id) and BaseFundAnchor(id) are already present.
+** The alternative is to let the PositionService map Instrument to the approp Id. This might be a little slower as need to look up full instrument first*** Adapters are still looking BaseFunds and Instruments up from the Repo rather than the cache.
+6. Positions NOT cached. Any reason why not? Possibly for CDW load. NB. DataCache does cache positions, I just think the 
+persistence libs have not been updated to get data from the cache.
+7. **Doesn't the int-pst-hods lib have a hazelcast client ref. It won't be able to rely on Autowired instance as not part of same project??
+
+**DataCache** This project contains the Hazelcast instance config and loaders.
+It also contains refs to the persistance libs to load funds, instruments and positions via their services.
+1. PositionLoader uses the position.hashCode() which wont necessarily be unique. Use hazelcast unique cluster Integer instead.
+2. The random hashcode id means no meaningful lookups. May want to consider using a composite key, which could support multiple dates in the future? **Why use a Map if the key is meaningless use a List<Position>**
+3. ***Loading data. Can pole for last touched..... and continually update cache. (no locking reqd as only loader updates cache).
+Esp as individual key locking is possible: map.tryLock("London")
+4. Also could update cache as changes made - but then tx required.
+
+***Adapters***
+1. I think adapters should continue only to know about services and BusinessEntities. So the persistence layer should not have
+HazelcastInstance 
+
+***DataCache in own jvm or part of Adapter***
+1. Almost certainly own jvm. As multiple adapters will need to access. SO thin-client needs to be used. we only maintain
+a connection to a single node of the cluster. The single node acts as a proxy for the client.
+2. Can add a lite member. A non-participating member. Not recommended for simple setups but more performant.
+
+private IMap<String, BaseFund> funds;
+
+***Config***
+The multicast group should be configured for envs, dev etc.. so clients do not accidentally communicate.
+
+
+-----------------Notes on Hazelcast--------------------
+> MultiMap allows you to store normal Map<String, List<String>> easily and conveniently, without continually having to get
+value, add, put.
+N.B. Hazelcast always returns a cloned copy of the data rather than the instance actually held; so modifying the returned object as we would in the preceding code does not actually update the persisted value.
+So this will now work, must do manualCities.get("GB").put("GB", modifiedCollection); ie replace existing values.
+
+
+??
+    <context:component-scan base-package="bdsl.persistence.hods.newworld"
+        name-generator="bdsl.persistence.hods.utils.BeanNameGenerator">
+    </context:component-scan>
+	
+	
+	
+This is the default config of the baseFunds map:
+<hazelcast>
+     <management-center enabled="true" update-interval="3">http://localhost:8080/mancenter</management-center>
+     <properties>
+          <property name="hazelcast.logging.type">log4j</property>
+     </properties>
+     <network>
+          <port port-count="100" auto-increment="true">5701</port>
+          <join>
+               <multicast enabled="true" loopbackModeEnabled="false">
+                    <multicast-group>224.2.2.3</multicast-group>
+                    <multicast-port>54327</multicast-port>
+                    <multicast-timeout-seconds>2</multicast-timeout-seconds>
+                    <multicast-time-to-live>32</multicast-time-to-live>
+               </multicast>
+               <tcp-ip enabled="false"/>
+          </join>
+          <interfaces enabled="false"/>
+          <ssl enabled="false"/>
+          <socket-interceptor enabled="false"/>
+          <symmetric-encryption enabled="false"/>
+     </network>
+
+     <map name="basefunds">
+          <in-memory-format>BINARY</in-memory-format>
+          <backup-count>1</backup-count>
+          <async-backup-count>0</async-backup-count>
+          <time-to-live-seconds>0</time-to-live-seconds>
+          <max-idle-seconds>0</max-idle-seconds>
+          <eviction-policy>NONE</eviction-policy>
+          <max-size policy="PER_NODE">2147483647</max-size>
+          <eviction-percentage>25</eviction-percentage>
+          <min-eviction-check-millis>100</min-eviction-check-millis>
+          <merge-policy>com.hazelcast.map.merge.PutIfAbsentMapMergePolicy</merge-policy>
+          <read-backup-data>false</read-backup-data>
+          <statistics-enabled>true</statistics-enabled>
+          <indexes>
+               <index ordered="false">internalId</index>
+          </indexes>
+     </map>
+     <map name="default">
+          <in-memory-format>BINARY</in-memory-format>
+          <backup-count>1</backup-count>
+          <async-backup-count>0</async-backup-count>
+          <time-to-live-seconds>0</time-to-live-seconds>
+          <max-idle-seconds>0</max-idle-seconds>
+          <eviction-policy>NONE</eviction-policy>
+          <max-size policy="PER_NODE">2147483647</max-size>
+          <eviction-percentage>25</eviction-percentage>
+          <min-eviction-check-millis>100</min-eviction-check-millis>
+          <merge-policy>com.hazelcast.map.merge.PutIfAbsentMapMergePolicy</merge-policy>
+          <read-backup-data>false</read-backup-data>
+          <statistics-enabled>true</statistics-enabled>
+     </map>
+
+     <queue name="default">
+          <queue-max-size>2147483647</queue-max-size>
+          <queue-sync-backup-count>1</queue-sync-backup-count>
+          <queue-async-backup-count>0</queue-async-backup-count>
+     </queue>
+     <executor-service name="default">
+          <pool-size>16</pool-size>
+          <queue-capacity>2147483647</queue-capacity>
+     </executor-service>
+     <partition-group enabled="false" group-type="PER_MEMBER"/>
+</hazelcast>
+
+	

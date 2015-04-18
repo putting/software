@@ -1,0 +1,150 @@
+Good explanation of why hibernate does an intial query, then two sub selects (caused filters to not work):
+
+ 
+
+http://www.javacodegeeks.com/2014/07/using-namedentitygraph-to-load-jpa-entities-more-selectively-in-n1-scenarios.html
+
+ 
+
+As we can see, the first query selects all customers from the table CustomerEntity. The following two selects fetch then the orders for each customer we have loaded in the first query. When we have 100 customers instead of two, we will get 101 queries. One initial query to load all customers and then for each of the 100 customers an additional query for the orders. That is the reason why this problem is called N+1
+
+ 
+
+Hibernate: 
+ 
+02
+      select
+ 
+   
+
+ 
+
+03
+          customeren0_.id as id1_1_,
+ 
+04
+          customeren0_.name as name2_1_,
+ 
+
+ 
+
+05
+          customeren0_.numberOfPurchases as numberOf3_1_ 
+ 
+06
+      from
+ 
+
+ 
+
+07
+          CustomerEntity customeren0_
+ 
+08
+ Hibernate: 
+ 
+
+ 
+
+09
+      select
+ 
+10
+          orders0_.CUSTOMER_ID as CUSTOMER4_1_0_,
+ 
+
+ 
+
+11
+          orders0_.id as id1_2_0_,
+ 
+12
+          orders0_.id as id1_2_1_,
+ 
+
+ 
+
+13
+          orders0_.campaignId as campaign2_2_1_,
+ 
+14
+          orders0_.CUSTOMER_ID as CUSTOMER4_2_1_,
+ 
+
+ 
+
+15
+          orders0_.timestamp as timestam3_2_1_ 
+ 
+16
+      from
+ 
+
+ 
+
+17
+          OrderEntity orders0_ 
+ 
+18
+      where
+ 
+
+ 
+
+19
+          orders0_.CUSTOMER_ID=?
+ 
+20
+ Hibernate: 
+ 
+
+ 
+
+21
+      select
+ 
+22
+          orders0_.CUSTOMER_ID as CUSTOMER4_1_0_,
+ 
+
+ 
+
+23
+          orders0_.id as id1_2_0_,
+ 
+24
+          orders0_.id as id1_2_1_,
+ 
+
+ 
+
+25
+          orders0_.campaignId as campaign2_2_1_,
+ 
+26
+          orders0_.CUSTOMER_ID as CUSTOMER4_2_1_,
+ 
+
+ 
+
+27
+          orders0_.timestamp as timestam3_2_1_ 
+ 
+28
+      from
+ 
+
+ 
+
+29
+          OrderEntity orders0_ 
+ 
+30
+      where
+ 
+
+ 
+
+31
+          orders0_.CUSTOMER_ID=?
+ 

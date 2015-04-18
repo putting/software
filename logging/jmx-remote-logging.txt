@@ -1,0 +1,13 @@
+JVM_ARGS="-Djob=$1 -Dlog.file=${LOG_FILE} ${JVM_ARGS} \
+  -Dcom.sun.management.jmxremote \
+  -Dcom.sun.management.jmxremote.port=9010 \
+  -Dcom.sun.management.jmxremote.local.only=false \
+  -Dcom.sun.management.jmxremote.authenticate=false \
+  -Dcom.sun.management.jmxremote.ssl=false "
+
+echo "CLASSPATH=$CLASSPATH"
+echo "JVM_ARGS=$JVM_ARGS"
+
+
+
+<peristence.hods.version>1.0.92-SNAPSHOT</peristence.hods.version>

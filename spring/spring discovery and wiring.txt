@@ -1,0 +1,119 @@
+Spring has 3 main components:
+
+i)                    A registry (ApplicationContext) of beans available to the app.
+
+ii)                   A configurer system that injects objects' dependencies into them by matching up the dependencies with beans in the context.
+
+iii)                 A dependency solver that can look at a configuration of many different beans and determine how to instantiate and configure them in the necessary order.
+
+ 
+
+ 
+
+1)      Do not use new for any spring bean: As spring will not know about it and it won’t be loaded into the context.
+
+2)      Mark the parent object as @Component etc… to make it discoverable.
+
+3)      @Autowired the child object variable to ensure it is injected.
+
+4)      Tag @Component the child object to make it discoverable.
+
+5)      IF you still NEED to manually do create a new Object yourself. Tag the object as @Configurable (inserts code into your object's constructor that alerts Spring that it's being created so that Spring can configure the new instance). So this may be helpful when injecting a bean into a pojo??? Ie the parent is not discovered as a bean. use the Spring @Configurable annotation along with AspectJ compile-time weaving.
+
+http://stackoverflow.com/questions/19896870/why-is-my-spring-autowired-field-null 
+
+and in context.xml  <bean class="org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator" />
+
+    <bean class="org.springframework.beans.factory.aspectj.AnnotationBeanConfigurerAspect" factory
+
+ 
+
+ 
+
+How to wire a Spring Bean into a non-managed pojo:
+
+a) ApplicationContext ctx = ...
+
+YourClass someBeanNotCreatedBySpring = ...
+
+ctx.getAutowireCapableBeanFactory().autowireBeanProperties(
+
+    someBeanNotCreatedBySpring,
+
+    AutowireCapableBeanFactory.AUTOWIRE_AUTODETECT, true);
+
+ 
+
+b) Using a  beanFactory
+
+public interface CreateInvoice(){
+
+    public Invoice create();
+
+}
+
+01.public classs CreateInvoiceForTwoDates implements CreateInvoice{
+
+02.     private Date fromDate ;
+
+03.     private Date toDate;
+
+04.     //Spring container created bean 
+
+05.     @Autowired
+
+06.     private InvoiceItemRepository invoiceItemRepository;
+
+07. 
+
+08.     public CreateInvoiceForTwoDates(Date fromDate,Date toDate){
+
+09.           this.fromDate = fromDate;
+
+10.           this.toDate = toDate;
+
+11.     }
+
+12.    public Invoice create(){
+
+13.        invoiceItemRepositoty.getInvoiceItem(fromDate,toDate);
+
+14.        //other code
+
+15.    }
+
+16.}
+
+ 
+
+01.public class SimpleInvoiceFactory  {
+
+02. @Autowired
+
+03. org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory;
+
+04. 
+
+05. public createInvoice(InvoiceCreationCriteria criteria){
+
+06.    CreateInvoiceForTwoDates creatInvoiceForTwoDates = 
+
+07.    new CreateInvoiceForTwoDates(criteria.fromDate,criteria.toDate);
+
+08.     
+
+09.    //Now to set spring created bean InvoiceItemRepository into creatInvoiceForTwoDates
+
+10.    //we have to do 
+
+11.    beanFactory.autowire(creatInvoiceForTwoDates);
+
+12.    creatInvoiceForTwoDates.create();
+
+13. }
+
+14. 
+
+15.}
+
+ 

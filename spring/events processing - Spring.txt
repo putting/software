@@ -1,0 +1,52 @@
+Guide
+
+http://www.tutorialspoint.com/spring/custom_events_in_spring.htm
+
+ 
+
+So we have only signoff events at present. But this could have several listeners and we could have many other events
+
+ 
+
+The events start within a service such as 
+
+@Service
+
+WorkflowService (which is composed of CacheUpdateEventPublisher) with a signOffEvent: 
+
+cacheUpdateEventPublisher.publish(createSignOffEvent(request));
+
+ 
+
+@Component
+
+CacheUpdateEventPublisher implements ApplicationEventPublisherAware: Publishes the CacheUpdateEvent’s.
+
+ 
+
+CacheEventListener<T extends CacheUpdateEvent> implements ApplicationListener<T>
+
+ 
+
+@Component
+
+SignOffEventListener extends CacheEventListener<SignOffEvent>
+
+ 
+
+ 
+
+@Component
+
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
+
+EventHandler: This dispatches Task’s to update the cache. Called by the CacheEventListener.
+
+ 
+
+CacheUpdateEvent extends ApplicationEvent: Custom Event which stores jbd & cob and is published and listened to.
+
+ 
+
+ 
+

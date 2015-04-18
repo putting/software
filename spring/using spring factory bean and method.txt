@@ -1,0 +1,20 @@
+This sets a value in a bean using an Enum value method as a lookup factpry
+
+ 
+
+<util:constant id="dataProviderBean" static-field=" Vendor.TEST" />
+
+ 
+
+Will set value on here using the bean above to get the value field from an enum
+
+<bean class=" domain.AuditInfo">
+
+        <property name="dataProvider">
+
+            <bean factory-bean="dataProviderBean" factory-method="value" />
+
+        </property>
+
+    </bean>
+

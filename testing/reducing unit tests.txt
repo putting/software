@@ -1,0 +1,16 @@
+https://theholyjava.wordpress.com/2015/01/26/challenging-myself-with-copliens-why-most-unit-testing-is-waste/
+
+ 
+
+require a change to the tests, your tests are too weak or incomplete.”
+Tips for reducing the mass of unit tests
+
+If the cost of maintaining and running your unit tests is too high, you can follow Coplien’s guidelines for eliminating the least valuable ones:
+
+Remove tests that haven’t failed in a year (informative value < maintenance and running costs)
+Remove tests that do not test functionality (i.e. don’t break when the code is modified)
+Remove tautological tests (f.ex. .setY(5); assert x.getY() == 5)
+Remove tests that cannot be tracked to business requirements and value
+Get rid of unit tests that duplicate what system tests do; if they’re too expensive to run, create subunit integration tests.
+ 
+

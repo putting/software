@@ -1,0 +1,59 @@
+Common test in equals is like this (Is it null and type of this obj etc..):
+
+org.apache.commons.lang3.builder.EqualsBuilder
+ 
+
+It’s a little more succinct
+
+ 
+
+public class EqualsTester {
+
+ 
+
+    public static <T> boolean isEqual(T o1, Object o2, EqualsBuilderFactory equalsBuilderFactory) {
+
+        if (o1 == o2)
+
+            return true;
+
+        if (o1 == null || o2 == null)
+
+            return false;
+
+        if (o1.getClass() != o2.getClass())
+
+            return false;
+
+        return equalsBuilderFactory.build(o1, o2).build();
+
+    }
+
+ 
+
+ 
+
+So create a generic version:
+
+Which is implemented
+
+ 
+
+public boolean equals(Object obj) {
+
+        return EqualsTester.isEqual(this, obj, new EqualsBuilderFactory<ClassImpl>() {
+
+            @Override
+
+            public EqualsBuilder build(ClassImpl o1, ClassImpl o2) {
+
+                return new EqualsBuilder()
+
+                        .append(o1.getSomething(), o2. .getSomething() )
+
+            }
+
+        });
+
+    }
+

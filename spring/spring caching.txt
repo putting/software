@@ -1,0 +1,32 @@
+Can annotate a save method to evict any cache entries that might be loaded:
+
+@Caching(evict = {@CacheEvict(value = "instrument.findByInsId", key = "#instrument.insId"),
+
+            @CacheEvict(value = "instrument.findBySl", allEntries = true)})
+
+    @Override
+
+    public void save()
+
+ 
+
+Need to define caches, named around the hibernate repo find methods:
+
+<bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+
+        <property name="caches">
+
+            <set>
+
+                <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean">
+
+                    <property name="name" value="instrument.findByInstId"/>
+
+                    <property name="allowNullValues" value="false"/>
+
+                </bean>
+
+ 
+
+Also make Services @Transactional but find methods @Transactional(readOnly = true)
+

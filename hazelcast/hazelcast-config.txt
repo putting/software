@@ -1,0 +1,105 @@
+Config:
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+
+       xmlns:context="http://www.springframework.org/schema/context"
+
+       xmlns:hz="http://www.hazelcast.com/schema/spring"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+
+       http://www.hazelcast.com/schema/spring http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd
+
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd ">
+
+ 
+
+       <import resource="classpath:spring-application-context.xml"/>
+
+ 
+
+                   
+
+       <hz:client id="instance">
+
+              <hz:group name="datacache" password="cache"/>
+
+              <hz:network>
+
+                     <hz:member>serverHostname:5701</hz:member>
+
+              </hz:network>
+
+       </hz:client>
+
+ 
+
+                   <!-- Configuring the server -->
+
+        <bean id="instance" class="com.hazelcast.core." factory-method="newHazelcastInstance">
+
+              <constructor-arg>
+
+                     <bean class="com.hazelcast.config.Config">
+
+                            <property name="groupConfig">
+
+                                   <bean class="com.hazelcast.config.GroupConfig">
+
+                                          <property name="name" value="datacache"/>
+
+                                          <property name="password" value="cache"/>
+
+                                   </bean>
+
+                            </property>
+
+                            <property name="networkConfig">
+
+                                   <bean class="com.hazelcast.config.NetworkConfig">
+
+                                          <property name="publicAddress" value="serverHostname"/>
+
+                                          <property name="port" value="5071"/>
+
+                                   </bean>
+
+                            </property>
+
+                     </bean>
+
+              </constructor-arg>
+
+       </bean>
+
+ 
+
+</beans>
+
+ 
+
+Cache and Map:
+
+    @Autowired
+
+    HazelcastInstance cache;
+
+ 
+
+IMap<String, Fund> fundMap = cache.getMap("funds");
+
+ 
+
+fundMap.put(fund.getCode() + "CF", fund);
+
+ 
+
+ 
+
+ 
+
+ 

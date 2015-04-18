@@ -1,0 +1,68 @@
+Let spring handle jpa tx:
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+
+        <property name="entityManagerFactory" ref="appEntityManagerFactory"/>
+
+    </bean>
+
+ 
+
+Inject the LocalContainer Entity manager into Tx:
+
+    <bean id=" appEntityManagerFactory "
+
+          class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+
+        <property name="persistenceUnitName" value="appEM" />
+
+        <property name="dataSource" ref="hodsDataSource" />
+
+        <property name="packagesToScan"
+
+                  value=" entities" />
+
+        <property name="jpaVendorAdapter" ref="hodsJpaVendorAdapter" />
+
+        <property name="jpaDialect">
+
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />
+
+        </property>
+
+        <property name="jpaProperties" ref="hodsJpaProperties" />
+
+    </bean>
+
+ 
+
+And data sources (using atomikos) be configured to support tx:
+
+                <bean id="appDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean"
+
+                                depends-on="transactionManager">
+
+                                <property name="uniqueResourceName" value="appDataSource" />
+
+                                <property name="xaDataSourceClassName" value="${db.app.xa.driver}" />
+
+                                <property name="poolSize" value="${db.pool.size}" />
+
+        <property name="maxPoolSize" value="${db.app.max.pool.size}"/>
+
+                                <property name="xaProperties">
+
+                                                <props>
+
+                                                                <prop key="URL">${ connection.url}</prop>
+
+                                                                <prop key="user">${ username}</prop>
+
+                                                                <prop key="password">${.password}</prop>
+
+                                                </props>
+
+                                </property>
+
+                </bean>
+

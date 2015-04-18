@@ -1,0 +1,115 @@
+1. Usage
+
+@ValidCob
+
+Private String cob
+
+ 
+
+2. Is defined as an interface annotation
+
+@Retention(RetentionPolicy.RUNTIME)
+
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+
+@net.sf.oval.configuration.annotation.Constraint(checkWith = ValidCobCheck.class)
+
+public @interface ValidCob
+
+{
+
+    String message() default "COB must contain a valid date string in the format: 'yyyy-MM-dd'";
+
+}
+
+ 
+
+3. Then implemented (using oval AnnotationCheck)
+
+package com.rbs.jedi.shared.validation;
+
+ 
+
+ 
+
+import net.sf.oval.Validator;
+
+import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
+
+import net.sf.oval.context.OValContext;
+
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
+
+ 
+
+import java.text.ParseException;
+
+import java.text.SimpleDateFormat;
+
+ 
+
+public class ValidCobCheck extends AbstractAnnotationCheck<ValidCob> {
+
+ 
+
+    private static final Logger LOG = LoggerFactory.getLogger(ValidCobCheck.class);
+
+ 
+
+    public static final String COB_FORMAT = "yyyy-MM-dd";
+
+ 
+
+    public boolean isSatisfied(Object validatedObject, Object cobToValidate, OValContext context, Validator validator) {
+
+ 
+
+        if (cobToValidate == null) {
+
+            LOG.error("null COB supplied");
+
+            return false;
+
+        }
+
+ 
+
+        if(cobToValidate.toString().isEmpty()) {
+
+            LOG.error("empty COB supplied");
+
+            return false;
+
+        }
+
+ 
+
+        try {
+
+            SimpleDateFormat ft = new SimpleDateFormat(COB_FORMAT);
+
+            ft.setLenient(false); //exact format only
+
+            ft.parse(cobToValidate.toString());
+
+ 
+
+        } catch (ParseException e) {
+
+           LOG.error("Invalid COB supplied: '{}'", cobToValidate.toString());
+
+           return false;
+
+        }
+
+ 
+
+        return true;
+
+    }
+
+}
+
+ 

@@ -1,0 +1,25 @@
+1) Scala Akka: If there's one thing that buzzes me off, it's Java's concurrency model. Scala did way better with Akka (Actor model). But even then you can argue using j.u.concurrent package with Java 8's CompletableFuture. 
+
+ 
+
+2) UTF-encoding: Good article on UTF, demonstrating variable and fixed length conversions
+
+http://javarevisited.blogspot.co.uk/2015/02/difference-between-utf-8-utf-16-and-utf.html
+
+ 
+
+3) RandomAccessFile: File with random access like an array. useful for low latency applications which needs some kind of persistence e.g. in front office trading application and FIX Engine, you can use random access file to store FIX sequence numbers or all open orders. 
+
+http://javarevisited.blogspot.co.uk/2015/02/randomaccessfile-example-in-java-read-write-String.html
+
+ 
+
+4) Java 8 default method interfaces: Good eg of how new default makes interfaces like abstract classes. Eg  Multiplication lambda = (x, y) -> x*y;
+
+interface Multiplication{ int multiply(int a, int b); default int square(int a){ return multiply(a, a); } default int cube(int a){ return multiply(multiply(a, a), a); } } 
+
+http://javarevisited.blogspot.sg/2014/07/default-defender-or-extension-method-of-Java8-example-tutorial.html
+
+ 
+
+ 

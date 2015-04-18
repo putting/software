@@ -1,0 +1,24 @@
+1) String: Calculating how many bytes a String uses is based on the charset used. Eg UTF-8 (Unicode), 16 etc. The max length of a string is 2GB or Integer.MaxValue
+
+ 
+
+GC Ques: http://javarevisited.blogspot.co.uk/2012/10/10-garbage-collection-interview-question-answer.html
+
+2) GC: Before removing an object from memory garbage collection thread invokes finalize() method of that object and gives an opportunity to perform any sort of cleanup required.
+
+3) GC: There are methods like System.gc() and Runtime.gc() which is used to send request of Garbage collection to JVM but it’s not guaranteed that garbage collection will happen. They are hints.
+4) An object becomes eligible for Garbage collection or GC if its not reachable from any live threads or by any static references.
+5) these are called as Young generation, Tenured or Old Generation and PermGen Area of heap.  New Generation is further divided into three parts known as Eden space, Survivor 1 and Survivor 2 space. When an object first created in heap its gets created in new generation inside Eden space and after subsequent minor garbage collection if object survives its gets moved to survivor 1 and then survivor 2 before major garbage collection moved that object to old or tenured generation.
+
+6) GC: Diff types: ParallelGC, Concurrent (marks then collects) plus new ones….. Also you can influence the sizes of the generations, which in turn will influence when gc happens.
+
+7) How do you find GC resulted due to calling System.gc()?
+
+Answer : Another GC interview question which is based on GC output. Similar to major and minor collection, there will be a word “System” included in Garbage collection output.
+
+8) Objects become eligible for gc when no live thread holds a ref. So ObjA hold to ObjB and viceversa will NOT prevent gc if no live thread holds ref.
+
+9) Garbage Collection does occur in PermGen space and if PermGen space is full or cross a threshold, it can trigger Full GC.
+
+
+

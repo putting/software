@@ -1,0 +1,34 @@
+jUnit
+
+ 
+
+1)      Get the classes using reflection that have certain annotations:
+
+    private Set<Class<?>> entityClassesInPackage(String packageName) {
+
+        return new Reflections(packageName).getTypesAnnotatedWith(Entity.class);
+
+    }
+
+From reflections.jar
+
+ 
+
+You can then check that these classes implement other such as AuditableInfo.class below
+
+ 
+
+    @Test
+
+    public void allEntitiesShouldBeAuditable() {
+
+        for (Class<?> entityClass : entityClassesInPackage(ENTITY_PACKAGE)) {
+
+            assertTrue("Entity [" + entityClass + "] is not auditable",
+
+                    AuditableInfo.class.isAssignableFrom(entityClass));
+
+        }
+
+    }
+

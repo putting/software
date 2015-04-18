@@ -1,0 +1,28 @@
+import com.fasterxml.jackson.core.JsonFactory;
+
+import com.fasterxml.jackson.core.JsonParser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+ 
+
+public void parseJson() {
+
+        JsonFactory factory = new JsonFactory();
+
+        factory.enable(JsonParser.Feature.ALLOW_COMMENTS);
+
+ 
+
+        try {
+
+            return new ObjectMapper(factory).readValue(instrumentDescriptions.getInputStream(), ParsedDescriptors.class);
+
+        } catch (IOException e) {
+
+            throw new RuntimeException("Failed to parse descriptors", e);
+
+        }
+
+}
+

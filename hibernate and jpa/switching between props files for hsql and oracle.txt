@@ -1,0 +1,126 @@
+1)      : Add the property file as a filter for test resources. Swap the name over
+
+ 
+
+<build>
+
+        <testResources>
+
+            <testResource>
+
+                <filtering>true</filtering>
+
+                <directory>src/test/resources</directory>
+
+                <includes>
+
+                    <include>test -context.xml</include>
+
+               </includes>
+
+                <targetPath>${project.build.directory}/test-classes</targetPath>
+
+            </testResource>
+
+            <testResource>
+
+                <filtering>false</filtering>
+
+                <directory>src/test/resources</directory>
+
+                <includes>
+
+                    <include>**/*.xml</include>
+
+                </includes>
+
+                <targetPath>${project.build.directory}/test-classes</targetPath>
+
+            </testResource>
+
+             </testResources>
+
+        <filters>
+
+            <filter>PROPS-FILE-NAME-HERE</filter>
+
+        </filters>
+
+    </build>
+
+ 
+
+2)      Define test context
+
+ 
+
+    <bean id="theEntityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+
+        <property name="dataSource" ref="cdwDataSource"/>
+
+        <property name="packagesToScan" value="packages"/>
+
+        <property name="jpaVendorAdapter" ref="thecdwJpaVendorAdapter"/>
+
+        <property name="jpaDialect">
+
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
+
+        </property>
+
+        <property name="jpaProperties" ref="theJpaProperties"/>
+
+        <property name="persistenceUnitName" value="theEM"/>
+
+    </bean>
+
+ 
+
+    <bean id="theJpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+
+        <property name="showSql" value="${db.show.sql}"/>
+
+    </bean>
+
+ 
+
+Here the properties files are used for the jdbc url etc:
+
+<bean id="theJpaProperties"
+
+                                class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+
+                                <property name="properties">
+
+                                                <props>
+
+                                                                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+
+                                                                <prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+
+                                                                <prop key="hibernate.cache.use_second_level_cache">false</prop>
+
+                                                                <prop key="hibernate.ejb.entitymanager_factory_name">eventEM</prop>
+
+                                                                <prop key="hibernate.cache.use_query_cache">true</prop>
+
+                                                                <prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
+
+                                                                </prop>
+
+                                                                <prop key="javax.persistence.sharedCache.mode">ENABLE_SELECTIVE</prop>
+
+            ${hibernate.hbm2ddl}
+
+            ${jdbc.username}
+
+            ${jdbc.password}
+
+            ${jdbc.url}
+
+                                                </props>
+
+                                </property>
+
+                </bean>
+

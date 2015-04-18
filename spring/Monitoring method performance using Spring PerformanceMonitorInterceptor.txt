@@ -1,0 +1,42 @@
+
+Define a service, pointcut (around the svc) and the advisor in the spring context.
+
+The advice (ie interceptor) is what will be called when svc method called.
+
+ 
+
+                <bean id="springMonitoredService"
+
+                                class="com.myorg.service.springmon.MyServiceSpringImpl"/>
+
+ 
+
+                <bean id="springMonitoringAspectInterceptor" class="org.springframework.aop.interceptor.PerformanceMonitorInterceptor">
+
+                                <property name="loggerName"  value="com.myorg.SPRING_MONITOR"/>                       
+
+                </bean>
+
+                                
+
+                <aop:config>
+
+ 
+
+                <aop:pointcut id="springMonitoringPointcut"
+
+                   expression="execution(* com.myorg.service..MyServiceSpringImpl.methodA(..))"/>
+
+ 
+
+                <aop:advisor pointcut-ref="springMonitoringPointcut" 
+
+                                                advice-ref="springMonitoringAspectInterceptor"/>      
+
+                </aop:config>
+
+ 
+
+Observe the use of the double period (..) notation in the specification of the class name. This is akin to the pattern com.myorg.service.*.MyServiceSpringImpl. Observe also that the pointcut is actually a bean in itself.
+
+The definition of the aspect; which, if you recall, is a combination of the pointcut and the advice. This is contained in the element <aop:advisor>, which references both the pointcut and the advice to form an aspect.

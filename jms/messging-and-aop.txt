@@ -1,0 +1,104 @@
+Also use of aop
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface MessageMapping {
+   
+   String value();
+   
+}
+
+Marker interfaces…Which in the spring app context are searched for the tags to find and register classes as handlers for the incoming messages.
+
+ 
+
+Messaging Spring config infrastructure:
+
+ 
+
+<bean id="eventConnectionFactory" class="bdsl.utilities.jms.ConnectionFactoryFactory" factory-method="createInstance">
+    <constructor-arg name="className" value="${jms.topicConnectionFactory.className}"/>
+    <constructor-arg name="propertiesJson" value="${jms.connectionFactory.properties}"/>
+</bean>
+
+<bean id="jmsDestinationResolver" class="org.springframework.jms.support.destination.DynamicDestinationResolver"/>
+
+<bean id="eventMarshaller" class="bdsl.libraries.eventbus.marshal.Marshaller"/>
+
+<!-- Publishers -->
+
+<bean id="exceptionEventTopicPublisher" class="bdsl.libraries.eventbus.event.publish.ExceptionEventPublisher">
+    <constructor-arg ref="exceptionEventJmsTemplate"/>
+    <constructor-arg ref="eventMarshaller"/>
+</bean>
+
+<bean id="dataChangeEventTopicPublisher" class="bdsl.libraries.eventbus.event.publish.DataChangeEventPublisher">
+    <constructor-arg ref="dataChangeEventJmsTemplate"/>
+    <constructor-arg ref="eventMarshaller"/>
+</bean>
+
+<bean id="genericEventPublisher" class="bdsl.libraries.eventbus.event.publish.GenericEventPublisher">
+  <property name="responsibleEventPublishers">
+     <list>
+        <ref bean="exceptionEventTopicPublisher"/>
+        <ref bean="dataChangeEventTopicPublisher"/>
+     </list>
+  </property>
+</bean>
+
+<!-- JmsTemplates -->
+
+<bean id="eventJmsTemplate" class="org.springframework.jms.core.JmsTemplate" abstract="true">
+    <property name="sessionTransacted" value="true" />
+    <property name="connectionFactory" ref="eventConnectionFactory"/>
+    <property name="pubSubDomain" value="true"/>
+    <property name="receiveTimeout" value="5000"/>
+    <property name="destinationResolver" ref="jmsDestinationResolver"/>
+</bean>
+
+
+
+<!—Topics à
+<bean id="dataChangeEventJmsTemplate" parent="eventJmsTemplate">
+    <property name="defaultDestinationName" value="${event.datachange.topic.name}"/>
+</bean>
+
+<bean id="exceptionEventJmsTemplate" parent="eventJmsTemplate">
+    <property name="defaultDestinationName" value="${event.exception.topic.name}"/>
+</bean>
+
+ 
+
+ 
+
+ 
+
+The EventPublisher main consist of:
+
+ 
+
+public abstract class AbstractEventPublisher implements EventPublisher {
+
+    private JmsTemplate jmsTemplate;
+    private Marshaller marshaller;
+
+    protected AbstractEventPublisher(JmsTemplate jmsTemplate, Marshaller marshaller) {
+        this.jmsTemplate = jmsTemplate;
+        this.marshaller = marshaller;
+    }
+
+    @Transactional
+    @Override
+    public void publish(Event event) {
+        try {
+            final String messageToSend = marshaller.marshal(event);
+            jmsTemplate.send(new SimpleTextMessageCreator(messageToSend));
+        } catch (Exception e) {
+            String eventId = event.getDataContext().getDataId();
+            String eventIdType = event.getDataContext().getDataIdType();
+            throw new EventPublishingException("Error publishing event [" + eventIdType + "=" + eventId + "]", e);
+        }
+    }
+
+ 
+

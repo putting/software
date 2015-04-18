@@ -1,0 +1,252 @@
+(1) loading data:
+
+  public void load() throws Exception
+    {
+        SimpleDateFormat sdf = new SimpleDateFormat( "ddMMyyyy" );
+        final Date today = sdf.parse( "12012015" );
+        final IMap<String, Position> positionMap = cache.getMap( "positions" );
+
+//        IMap<String, Instrument> instruments = cache.getMap( "instruments" );
+//        IMap<String, BaseFund> funds = cache.getMap( "basefunds" );
+//        PositionInterceptor interceptor = new PositionInterceptor( instruments, funds );
+//        positionMap.addInterceptor( interceptor );
+
+        ExecutorService executor = Executors.newFixedThreadPool(THREADS);
+        int total = positionService.getPositionCount(today, "EODVL");
+        int pagesRequired = (total / PAGE_SIZE) + 1;
+        for( int page = 0; page < pagesRequired; page++ )
+        {
+            final Pageable pageable = new PageRequest( page, PAGE_SIZE, new Sort( Sort.Direction.ASC, "id" ) );
+            executor.execute( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
+                    {
+                        Page<Position> positions = positionService.findByEffectiveDateAndBusinessProcess(today, "EODVL", pageable);
+                        for( Position position : positions.getContent() )
+                        {
+                            positionMap.put( Integer.toString( position.hashCode() ), position );
+                        }
+                    }
+                    catch( Exception e )
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        try
+        {
+            executor.shutdown();
+            executor.awaitTermination(30L, TimeUnit.MINUTES );
+            System.out.println( "******************DONE!!!!" );
+        }
+        catch( InterruptedException e )
+        {
+            e.printStackTrace();
+        }
+
+ 
+
+(2) Intercepting
+
+//TODO: https://github.com/noctarius/hazelcast-custom-eviction/blob/master/src/main/java/org/hazelcast/example/EvictingMapInterceptor.java
+@Component
+public class PositionInterceptor implements MapInterceptor, Serializable
+{
+    @Autowired
+    private HazelcastInstance cache;
+
+    private IMap<String, Instrument> instruments;
+    private IMap<String, BaseFund> funds;
+
+    public PositionInterceptor()
+    {
+    }
+
+    public void init()
+    {
+        instruments = cache.getMap( "instruments" );
+        funds = cache.getMap( "funds" );
+        cache.getMap( "positions" ).addInterceptor( this );
+    }
+
+    @Override
+    public Object interceptGet(Object positionObject)
+    {
+        Position position = ( Position ) positionObject;
+        position.setInstrument( instruments.get( position.getInstrument().getInstrumentId() ) );
+        position.setBaseFund( funds.get( position.getBaseFund().getCode() ) );
+
+        return position;
+    }
+
+    @Override
+    public void afterGet(Object o) {
+
+    }
+
+    @Override
+    public Object interceptPut(Object oldValue, Object newValue)
+    {
+        return newValue;
+    }
+
+    @Override
+    public void afterPut(Object o) {
+
+    }
+
+    @Override
+    public Object interceptRemove(Object removedValue)
+    {
+        return removedValue;
+   }
+
+    @Override
+    public void afterRemove(Object o) {
+
+    }
+}
+
+ 
+
+(3) Hibernate 2nd level cache.xml
+
+<hz:hazelcast id="instance">
+    <hz:config>
+        <!--<hz:group name="datacache" password="cache"/>-->
+        <hz:properties>
+            <hz:property name="hazelcast.logging.type">log4j</hz:property>
+        </hz:properties>
+        <hz:network port="5701" port-auto-increment="true">
+            <hz:join>
+                <hz:multicast enabled="false"/>
+                <hz:tcp-ip enabled="true">
+                    <hz:members>127.0.0.1</hz:members>
+                </hz:tcp-ip>
+            </hz:join>
+        </hz:network>
+    </hz:config>
+</hz:hazelcast>
+
+ 
+
+And
+
+ 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:hz="http://www.hazelcast.com/schema/spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.hazelcast.com/schema/spring http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--<context:component-scan base-package="bdsl.cache.interceptors"/>-->
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:/hazelcast-config.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <hz:hazelcast id="instance">
+        <hz:config>
+            <hz:group name="${name}" password="${password}"/>
+            <hz:management-center enabled="true" url="http://localhost:8080/mancenter"/>
+            <hz:properties>
+                <hz:property name="hazelcast.logging.type">log4j</hz:property>
+            </hz:properties>
+            <hz:network port="5701" port-auto-increment="true">
+                <hz:join>
+                    <hz:multicast enabled="true"/>
+                    <!--<hz:tcp-ip enabled="true">-->
+                        <!--<hz:members>127.0.0.1</hz:members>-->
+                    <!--</hz:tcp-ip>-->
+                </hz:join>
+            </hz:network>
+            <!--cannot use map stores as they have a circular reference with hods context scanning-->
+            <hz:map name="instruments">
+                <hz:indexes>
+                    <hz:index attribute="internalId"/>
+                </hz:indexes>
+            </hz:map>
+            <hz:map name="basefunds">
+                <hz:indexes>
+                    <hz:index attribute="internalId"/>
+                </hz:indexes>
+            </hz:map>
+            <hz:map name="positions"/>
+        </hz:config>
+    </hz:hazelcast>
+
+    <!--<bean id="positionsInterceptor" class="bdsl.cache.interceptors.PositionInterceptor" depends-on="instance" init-method="init"/>-->
+
+</beans>
+
+ 
+
+And
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:hz="http://www.hazelcast.com/schema/spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.hazelcast.com/schema/spring http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <import resource="classpath:newworld/persistence-hods-out-container-nonxa-context.xml"/>
+    <!--<import resource="classpath:jta-config.xml"/>-->
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location"><value>app.properties</value></property>
+    </bean>
+
+    <bean id="threadPoolTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="5"/>
+        <property name="maxPoolSize" value="5"/>
+        <property name="queueCapacity" value="30"/>
+        <property name="awaitTerminationSeconds" value="240"/>
+        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
+    </bean>
+
+    <bean id="hodsDataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = oracdwdbg-scan.mandg.co.uk)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = hods1dbg.mandg.co.uk)))"/>
+        <property name="username" value="hodsread"/>
+        <property name="password" value="hodsread"/>
+        <property name="initialSize" value="5"/>
+        <property name="maxTotal" value="10"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager" name="transactionManager">
+        <property name="entityManagerFactory" ref="hodsEntityManagerFactory"></property>
+    </bean>
+
+    <hz:client id="instance">
+        <hz:network>
+            <hz:member>127.0.0.1:5701</hz:member>
+        </hz:network>
+    </hz:client>
+
+    <bean id="baseFundLoader" class="bdsl.cache.loaders.BaseFundLoader"/>
+
+    <bean id="instrumentLoader" class="bdsl.cache.loaders.InstrumentLoader"/>
+
+    <bean id="positionLoader" class="bdsl.cache.loaders.PositionLoader"/>
+
+</beans>
+
+ 
+
+ 

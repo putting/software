@@ -1,0 +1,37 @@
+Response: goes to UI. Is a mutable (for Jackson) requires setters etc.. for serialization
+
+ 
+
+GetDashboardDataResponse implements CachedResponse {
+
+ 
+
+private List<Map<String, Object>> dashboardData;
+
+private String lastUpdated;
+
+private long checksum;
+
+………..
+
+ 
+
+The cache value which has the same data as response but is immutable
+
+public class DashboardCacheValue implements CacheValue {
+
+ 
+
+    private final Map<String, String> workflowStatuses;
+
+    private final long checksum;
+
+    private final Date lastUpdated;
+
+ 
+
+ 
+
+I questioned why the 2 sikilar classes and came down to jackson
+
+ 

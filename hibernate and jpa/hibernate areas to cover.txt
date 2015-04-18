@@ -1,0 +1,35 @@
+Will need to revise hibernate to be able most of the questions from a job spec:
+Design - Good Understanding of: - ?
+• SOLID principles ?
+• Loose coupling ?
+• Circular dependency resolution ?
+• Layered architecture ?
+• DDD?
+• Advanced Hibernate - Expert ?
+• Contributed patches to Hibernate source? ?
+• Increased number of objects in the session ?
+• Implications ?
+• Techniques to minimise impact?
+• Cascades ?
+• Possible issues from getting it wrong ?
+• Types of performance issues ?
+• Design patterns to get it right?
+• Dynamic insert/update ?
+• Performance considerations ?
+• Functional considerations??
+• Flush mode ?
+• Implications ?
+• Techniques to minimise impact ?
+• Design patterns?
+• Considerations of running hibernate alongside alternative persistence framework ?
+• Implications of bi-directional relationships ?
+• How to identify direction?
+• Hibernate cache ?
+• Dealing with long running transactions ?
+• Open session in view - problems, alternatives ?
+• Caching ?
+• Database ?
+• Lock contention ?
+• Query plans ?
+• Indexing ?
+• Refactoring??

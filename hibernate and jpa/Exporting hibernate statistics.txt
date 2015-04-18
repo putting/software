@@ -1,0 +1,24 @@
+Exporting hibernate statistics
+
+    <bean id="hibernateStatisticsBean" class="org.hibernate.jmx.StatisticsService">
+        <property name="statisticsEnabled" value="true"/>
+        <property name="sessionFactory" value="#{hodsEntityManagerFactory.sessionFactory}"/>
+    </bean>
+
+
+    <bean id="jmxExporter" class="org.springframework.jmx.export.MBeanExporter">
+        <property name="beans">
+            <map>
+                <entry key="Hibernate:application=Statistics" value-ref="hibernateStatisticsBean"/>
+            </map>
+        </property>
+    </bean>
+	
+	
+	    <bean id="hibernateStatisticsBean" class="org.hibernate.jmx.StatisticsService">
+        <property name="statisticsEnabled" value="true"/>
+        <property name="sessionFactory" value="#{hodsEntityManagerFactory.sessionFactory}"/>
+        <!--<property name="sessionFactory">-->
+             <!--util:property-path path="hodsEntityManagerFactory.sessionFactory"-->
+        <!--</property>-->
+    </bean>

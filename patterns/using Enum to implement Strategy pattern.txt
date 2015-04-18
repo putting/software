@@ -1,0 +1,6 @@
+It cuts down on the number of classes required, BUT violates open/closed as you need to modify enum to add new functionality. BUT does reduce the no. of classes.
+
+ 
+
+http://javarevisited.blogspot.sg/2014/11/strategy-design-pattern-in-java-using-Enum-Example.html
+

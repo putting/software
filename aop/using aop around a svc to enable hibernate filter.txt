@@ -1,0 +1,136 @@
+import org.aspectj.lang.ProceedingJoinPoint;
+
+import org.aspectj.lang.annotation.Around;
+
+import org.aspectj.lang.annotation.Aspect;
+
+import org.aspectj.lang.reflect.MethodSignature;
+
+import org.hibernate.Filter;
+
+import org.hibernate.Session;
+
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
+
+import org.springframework.core.annotation.Order;
+
+ 
+
+import javax.persistence.EntityManager;
+
+import javax.persistence.PersistenceContext;
+
+import java.lang.annotation.Annotation;
+
+import java.lang.reflect.Method;
+
+import java.text.DateFormat;
+
+import java.util.Date;
+
+ 
+
+@Aspect
+
+@Order
+
+public class TemporalFilterAdvice {
+
+ 
+
+    private static final Logger LOG = LoggerFactory.getLogger(TemporalFilterAdvice.class);
+
+ 
+
+    private static final String FILTER_NAME = "effectiveDate";
+
+ 
+
+    private static final String FILTER_DATE_PARAM = "effectiveDate";
+
+    private static final String CORRECTED_IND_PARAM = "corrected";
+
+ 
+
+    @PersistenceContext(unitName = "EM")
+
+    private EntityManager em;
+
+ 
+
+    @Around("execution(*services.*ServiceImpl.*(..))")
+
+    public Object invoke(ProceedingJoinPoint pjp) throws Throwable {
+
+ 
+
+        MethodSignature signature = (MethodSignature) pjp.getSignature();
+
+ 
+
+        Date effectiveDate = evaluateEffectiveDate(signature.getMethod(), pjp.getArgs());
+
+        BooleanCharacter correctedIndicator = BooleanCharacter.N;
+
+ 
+
+        LOG.trace(String.format("setting temporal filter on effective date to %s and corrected indicator to %s for method %s",
+
+                DateFormat.getDateInstance().format(effectiveDate), correctedIndicator.toString(), signature.getName()));
+
+ 
+
+        enableFilter(effectiveDate, correctedIndicator);
+
+ 
+
+        // Leave filter enabled so that lazy loaded time sensitive associations have filter applied
+
+        return pjp.proceed();
+
+    }
+
+ 
+
+//***HERE is where the EM gets the session and enables the filter AND applies the passed params****//
+
+    private void enableFilter(Date date, BooleanCharacter corrected) {
+
+        Filter filter = em.unwrap(Session.class).enableFilter(FILTER_NAME);
+
+        filter.setParameter(FILTER_DATE_PARAM, date);
+
+        filter.setParameter(CORRECTED_IND_PARAM, corrected.toString());
+
+    }
+
+ 
+
+    private Date evaluateEffectiveDate(Method method, Object[] methodParameters) {
+
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+
+        for (int i = 0; i < parameterAnnotations.length; i++) {
+
+            for (Annotation annotation : parameterAnnotations[i]) {
+
+                if (annotation.annotationType() == EffectiveDate.class) {
+
+                    return (Date) methodParameters[i];
+
+                }
+
+            }
+
+        }
+
+        return new Date();
+
+    }
+
+ 
+
+}
+

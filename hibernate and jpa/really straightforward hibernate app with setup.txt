@@ -1,0 +1,6 @@
+Just to demo session etc..
+
+ 
+
+http://examples.javacodegeeks.com/enterprise-java/hibernate/hibernate-jpa-dao-example/
+

@@ -1,0 +1,135 @@
+﻿Hibernate Questions:
+
+**Java**
+• SOLID principles
+	> S=Single Responsibility of each class; O=Object orientated; L=Liskov ....; I=develop against interfaces; D=decouple...
+• Loose coupling 
+	> Develop against interfaces. Reduces the impact of re factoring.
+• Circular dependency resolution 
+	> Use some kind of terminator.
+• Layered architecture 
+	> Leeds to looser coupling.
+• DDD
+	> Data Driven Design. Entity or modelling perspective?
+	
+**Hibernate**
+• Advanced Hibernate - Expert 
+• Contributed patches to Hibernate source? 
+	> Nope.
+• Increased number of objects in the session 
+	> Memory related issues as more objects loaded. Also reduces the efficiency of caching. NB HQL is less efficient than a load.
+	> Avoid long running sessions which keep entities in mem in case dirtied. do flush(sends to db) and clear(releases entities from session).
+• Implications 
+	> Managing the Session efficiently is the key to getting high performance in enterprise applications.
+• Techniques to minimise impact
+	> Regular session.flush() and session.clear() (eg as per a jdbc query batch size):
+	> •it allows to keep the number of objects to track for dirtiness low (so flushing should be fast), 
+	> •it should allow to reclaim memory.
+	> You need to clear() the session explicitly if you don't want to keep entities tracked, that's all, that's how it works (one might want to commit a transaction without "loosing" the entities). 
+• Cascades 
+	> Bi-directional relationships require cascade deletion on both sides of relationship else null constraint issue.
+	> Mixing JPA with hibernate cascade can cause issue where ACTION_SAVE_UPDATE action, but the JPA will pass a ACTION_PERSIST and ACTION_MERGE.
+	> Reminder of whic side is the managing side of a relationship.
+• Possible issues from getting it wrong 
+	>
+• Possible issues from getting it wrong 
+	> **V.good article**http://www.infoq.com/articles/hibernate_tuning
+	> DON'T define a relationship, unless the entities need to be loaded together.
+	> Prefer uni to bi-directional. Due to the many-to-many nature, loading from one side of a bidirectional association can trigger loading of the other side which can further trigger extra data loading of the original side, and so on.
+	> **Define a relationship via ID's (value-typed properties). ie not references and do additional lookup.
+• Types of performance issues 
+	> a) PK generators, b) jdbc batch size, c) flush and clear, d) reduce dirty checking, e) slow running sql
+	> Dirty checking (NOT based on hashcode and equals). Avoid dirty checking where business methods are read-only: @Transactional(readOnly=true)
+	
+• Design patterns to get it right
+• Dynamic insert/update 
+• Performance considerations 
+	> SQL: Consider the (n+1) subSelect issue. Where a table has a lot of related tables and a subSelect is generated for each.
+	> Check indexes for lookups.
+	> Lazy loading. 
+	> Illustrates an eg of whole object tree joins: http://www.javalobby.org/articles/hibernate-query-101/
+	> reduce columns to only those reqd: select new CityItem(city.id, city.name, city.electrityCompany.name) from City city
+	> a) Fetching Strategies: Join fetching, Select fetching (default) is extremely vulnerable to N+1 selects problems, Subselect fetching and Batch fetching.
+	> b) Caches, 
+	> c) Collection performance....
+	> Sequence generators - Can use optimised generators (HiLog) which return say 50 sequence nos from a db in a go.
+	> some contrary recommendations: http://blog.f12.no/wp/2010/02/16/hibernate-performance-and-optimization/
+• Functional considerations?
+• Flush mode 
+	> FlushModeType.AUTO, FlushMode.COMMIT (better for read-only sessions as will not flush before each query).
+• Implications 
+	>
+• Techniques to minimise impact 
+• Design patterns
+• Considerations of running hibernate alongside alternative persistence framework 
+• Implications of bi-directional relationships 
+• How to identify direction
+• Hibernate cache 
+	> 2nd-level (an app level cache for storing entity data). stores entity data NOT the entities (in a hashmap ket --> [entity data]).
+	The second level cache gets populated when an object is loaded by Id from the database, using for example entityManager.find(), or when traversing lazy initialized relations. 
+	> Query cache. 
+	> There is an harmful side-effect of how the two caches work, that occurs if the cached query results are configured to expire more frequently than the cached entities returned by the query. The solution to this problem is to configure query results expiration to be aligned with the expiration of the entities returned by the query.
+	> @Cache(CacheConcurrencyStrategy.READ_ONLY), @Cache(CacheConcurrencyStrategy.READ_WRITE),@Cache(CacheConcurrencyStrategy.TRANSACTIONAL).
+• Dealing with long running transactions 
+• Open session in view - problems, alternatives 
+• Caching 
+	> Define session, query and level-2 caches. Also diff implementations/
+• Database 
+• Lock contention 
+• Query plans 
+• Indexing 
+• Refactoring?
+
+
+
+
+Generally performance problems should be investigated by:
+> turning on show_sql property.
+> use_sql_comments property. let’s you identity if a HQL statement, lazy loading or a criteria query led to the statement.
+> Enable statitics: Statistics statistics = sessionFactory.getStatistics(); statistics.setStatisticsEnabled(true); statistics.logSummary();
+> Simple Book --> * Chapters. List<Book> books = session.createQuery(“from Book b where b.name like ?”).setString(0, “Java%”).list(); 
+	If you iterate over books you will get 1+n queries in total.
+	Solution 1: Load chapters in batches
+	OneToMany(cascade = CascadeType.ALL) <br>JoinColumn(nullable = false) 
+	@BatchSize(size = 4) 
+	private Set<Chapter> chapters = new HashSet<Chapter>(); 
+Solution 2) load all associations with 1 sql
+With join fetch we can tell Hibernate to load associations immediately. 
+Hibernate will use a single SQL select which joins the chapters to the book table. NB all loaded into mem though.
+Finally, don’t use join fetch with multiple collections, you will create a rapidly growing Cartesian product.
+
+
+How do query and 2-nd level caches work:
+If a query under execution has previously cached results, then no SQL statement is sent to the database. Instead the query results are retrieved from the query cache, and then the cached entity identifiers are used to access the second level cache. 
+
+If the second level cache contains data for a given Id, it re-hydrates the entity and returns it. If the second level cache does not contain the results for that particular Id, then an SQL query is issued to load the entity from the database.
+
+Prefer using EhCacheRegionFactory instead of SingletonEhCacheRegionFactory. Using EhCacheRegionFactory means that Hibernate will create separate cache regions for Hibernate caching, instead of trying to reuse cache regions defined elsewhere in the application.
+Caching an entity
+@Cache(usage=CacheConcurrencyStrategy.READ_ONLY, 
+     region="yourEntityCache")
+public class SomeEntity {
+
+Associations can also be cached by the second level cache, but by default this is not done. In order to enable caching of an association, we need to apply @Cache to the association itself:
+@Entity       
+public class SomeEntity {
+    @OneToMany
+    @Cache(usage=CacheConcurrencyStrategy.READ_ONLY,
+        region="yourCollectionRegion")
+     private Set<OtherEntity> other;     
+
+@NamedQuery(name="account.queryName",
+   query="select acct from Account ...",
+   hints={
+       @QueryHint(name="org.hibernate.cacheable",
+       value="true")
+
+-----Proxies-----	   
+Hibernate3 generates proxies by default for all persistent classes and uses them to enable lazy fetching of many-to-one and one-to-one associations.
+
+Classes cannot be final as:
+By default, Hibernate uses a subclass of the class. The proxied class must implement a default constructor with at least package visibility. This constructor is recommended for all persistent classes. 
+
+
+
+
