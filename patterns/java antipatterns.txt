@@ -1,0 +1,57 @@
+http://www.odi.ch/prog/design/newbies.php
+
+superfast code can't help you when you allocate too much memory.
+
+String concatenation
+Lost StringBuffer performance
+Testing for string equality
+Converting numbers to Strings
+Not taking advantage of immutable objects
+XML parsers are for sissies
+Assembling XML with String operations
+The XML encoding trap
+char is not int
+Platform dependent filenames
+Undefined encoding
+Unbuffered streams
+Unbuffered writes to an OutputStreamWriter
+Infinite heap
+Infinite time
+Assuming a cheap timer call
+Catch all: I don't know the right runtime exception
+Exceptions are annoying
+Re-wrapping RuntimeException
+Not properly propagating the exception
+Catching to log
+Incomplete exception handling
+The exception that never happens
+The transient trap
+Overkill initialization
+Log instances: static or not?
+Chosing the wrong class loader
+Poor use of reflection
+Synchronization overkill
+Wrong list type
+The HashMap size trap
+Hashtable, HashMap and HashSet are overrated
+Lists are overrated
+Object arrays are soooo flexible
+Premature object decomposition
+Modifying setters
+Unnecessary Calendar
+Relying on the default TimeZone
+Time zone "conversion"
+Using Calendar.getInstance()
+Dangerous Calendar manipulation
+Calling Date.setTime()
+Assuming SimpleDateFormat was thread-safe
+Having a global Configuration/Parameters/Constants class
+Not noticing overflows
+Using == with float or double
+Storing money in floating point variables
+Not freeing resources in a finally block
+Abusing finalize()
+Involuntarily resetting Thread.interrupted
+Spawning thread from static initializers
+Canceled timer tasks that keep state
+Holding strong references to ClassLoaders and unflushable caches
